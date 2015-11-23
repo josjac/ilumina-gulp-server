@@ -13,40 +13,47 @@ var connect = require('connect');
 
 var serveStatic = require('serve-static');
 
+var yargs = require('yargs').argv;
+
 var cwd = process.cwd();
 
-var default_config = [
-  { 
-    url: '/static/scripts', 
-    path: path.join(cwd, 'src', 'static', 'scripts')
-  },
-  { 
-    url: '/static/libs', 
-    path: path.join(cwd, 'src', 'static', 'libs')
-  },
-  { 
-    url: '/static/typos', 
-    path: path.join(cwd, 'src', 'static', 'typos')
-  },
-  { 
-    url: '/static/images', 
-    path: path.join(cwd, 'src', 'static', 'images')
-  },
-  { 
-    url: '/', 
-    path: path.join(cwd, 'dist')
-  }
-];
+var default_config = {
+  src: [
+    { 
+      url: '/static/scripts', 
+      path: path.join(cwd, 'src', 'static', 'scripts')
+    },
+    { 
+      url: '/static/libs', 
+      path: path.join(cwd, 'src', 'static', 'libs')
+    },
+    { 
+      url: '/static/typos', 
+      path: path.join(cwd, 'src', 'static', 'typos')
+    },
+    { 
+      url: '/static/images', 
+      path: path.join(cwd, 'src', 'static', 'images')
+    },
+    { 
+      url: '/', 
+      path: path.join(cwd, 'dist')
+    }
+  ],
+  port: yargs.port || 8000,
+  host: yargs.host || '0.0.0.0',
+  https: yargs.https || false
+};
 
 module.exports = function(configs) {
   configs = configs || default_config;
 
   gulp.task('server', function() {
-    var port = config.yargs.port || 8000;
-    var host = config.yargs.host || '0.0.0.0';
+    var port = configs.port || 8000;
+    var host = configs.host || '0.0.0.0';
     var app = connect();
 
-    configs.forEach(function(config) {
+    configs.src.forEach(function(config, b) {
       app.use(
         config.url,
         serveStatic(
@@ -55,7 +62,7 @@ module.exports = function(configs) {
       );
     });
 
-    if (configs.yargs.https) {
+    if (configs.https) {
       https.createServer({
         key: fs.readFileSync('ssl/dev-key.pem'),
         cert: fs.readFileSync('ssl/dev-cert.pem')
@@ -66,3 +73,4 @@ module.exports = function(configs) {
     }
   });
 };
+
