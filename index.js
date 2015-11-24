@@ -1,6 +1,3 @@
-/*
- * configuracion:
- */
 var gulp = require('gulp');
 
 var path = require('path');
@@ -14,6 +11,8 @@ var connect = require('connect');
 var serveStatic = require('serve-static');
 
 var yargs = require('yargs').argv;
+
+var _ = require('lodash');
 
 var cwd = process.cwd();
 
@@ -45,32 +44,41 @@ var default_config = {
   https: yargs.https || false
 };
 
-module.exports = function(configs) {
-  configs = configs || default_config;
-
-  gulp.task('server', function() {
-    var port = configs.port || 8000;
-    var host = configs.host || '0.0.0.0';
-    var app = connect();
-
-    configs.src.forEach(function(config, b) {
-      app.use(
-        config.url,
-        serveStatic(
-          path.resolve(config.path)
-        )
-      );
-    });
-
-    if (configs.https) {
-      https.createServer({
-        key: fs.readFileSync('ssl/dev-key.pem'),
-        cert: fs.readFileSync('ssl/dev-cert.pem')
-      }, app).listen(port, host);
-    }
-    else {
-      app.listen(port, host);
-    }
-  });
+var self = {
+  config: default_config,
+  run: function(config) {
+    config = _.assign(this.config, config);
+    server(config);
+  }
 };
 
+function server(config) {
+  var port = config.port || 8000;
+  var host = config.host || '0.0.0.0';
+  var app = connect();
+
+  config.src.forEach(function(config, b) {
+    app.use(
+      config.url,
+      serveStatic(
+        path.resolve(config.path)
+      )
+    );
+  });
+
+  if (config.https) {
+    https.createServer({
+      key: fs.readFileSync('ssl/dev-key.pem'),
+      cert: fs.readFileSync('ssl/dev-cert.pem')
+    }, app).listen(port, host);
+  }
+  else {
+    app.listen(port, host);
+  }
+}
+
+gulp.task('server', function() {
+  self.run();
+});
+
+module.exports = self;
